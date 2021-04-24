@@ -2,10 +2,30 @@ const { required } = require('joi');
 const mongoose=require('mongoose');
 const Review=require('./review');
 const Schema=mongoose.Schema;
+const opts = { toJSON: { virtuals: true } };
 
+const ImageSchema=new Schema({
+    url:String,
+    filename:String
+})
+//https://res.cloudinary.com/djki2muxd/image/upload/w_300/v1617889206/YelpCamp/uygdfzpisjrpkupv3fv1.jpg
+ImageSchema.virtual('thumbnail').get(function(){
+    return this.url.replace('/upload','/upload/w_150');
+})
 const CampgroundSchema=new Schema({
     title: String,
-    image: String,
+    images: [ImageSchema],
+    geometry:{
+        type: {
+            type: String,
+            enum: ['Point'],
+            required: true
+          },
+          coordinates: {
+            type: [Number],
+            required: true
+          }
+    },
     price: Number,
     description: String,
     location:String,
@@ -19,6 +39,14 @@ const CampgroundSchema=new Schema({
             ref:'Review'
         }
     ]
+}, opts)
+
+CampgroundSchema.virtual('properties').get(function(){
+    return {
+        id:this._id,
+        title:this.title
+    };
+   
 })
 
 CampgroundSchema.post('findOneAndDelete', async function(doc){
